@@ -6,3 +6,22 @@ body {
 a {
   color: #00B7FF;
 }
+
+.sudoCell {
+    margin:0;
+    padding:0;
+    width:45px;
+    height:45px;
+    display:table-cell;
+    text-align:center;
+    vertical-align:middle;
+}
+
+.sudoCellKnown {
+    width:45px;
+    height:45px;
+    font-size:2.5em;
+}
+.userDefined {
+    color: #00B7FF;
+}
