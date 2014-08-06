@@ -77,12 +77,13 @@ MetaCell.prototype.updateUnknownCells = function() {
             if (!c.isKnown()) {
                 c.excludeValues(known_values);
                 if (c.possibleValues.length === 0) {
-                    return; // cannot solve
+                    return false; // cannot solve
                 }
                 assert(c.possibleValues.length > 0, " We have excluded the only possible value", c);
             }
         }
     }
+    return true;
 };
 
 MetaCell.prototype.Update = function() {
@@ -130,15 +131,21 @@ MetaCell.prototype.performDeductions = function() {
     var that = this;
     var b = this.get_unknown_values();
 
-    b.forEach(function(value) {
+    b.every(function(value) {
         var res = that.find_possible_cells(value);
+        if (res.length === 0 ) {
+            that.parent.setUnsolvable(" cannot find candidate cells for " + value + " in meta cell" + that.row + "[" + that.nbRow + "]," + that.col + "[" + that.nbCol + "]");
+            return false; // cannot solve - dead end
+        }
         assert(res.length != 0, " cannot find candidate cells for " + value + " in meta cell" + that.row + "[" + that.nbRow + "]," + that.col + "[" + that.nbCol + "]");
         if (res.length === 1) {
             var c = res[0];
             console.log(" Only Choice !", value, c.row, ",", c.col, c.possibleValues)
             c.setKnown(value);
         }
+        return true;
     });
+    return true;
 };
 
 
@@ -151,12 +158,12 @@ MetaCell.prototype.getRows = function() {
     var me = this;
 
     function __getRow(rowIndex) {
-        var row = []
+        var row = [];
         for (var colIndex = 0; colIndex < me.nbRow; colIndex++) {
             row.push(me.cell(rowIndex, colIndex));
         }
         return row;
-    };
+    }
     var rows = [];
     for (var rowIndex = 0; rowIndex < this.nbRow; rowIndex++) {
         rows.push(__getRow(rowIndex));
@@ -196,7 +203,7 @@ Cell.prototype.setKnown = function(value) {
 };
 
 Cell.prototype.excludeValue = function(value) {
-    var lbefore = this.possibleValues.length
+    var lbefore = this.possibleValues.length;
     this.possibleValues = this.possibleValues.filter(function(a) {
         return a !== value;
     });
@@ -223,8 +230,8 @@ Cell.prototype.excludeValues = function(values) {
 
 Cell.prototype.displayValue = function() {
     var that = this;
-    if (this.isKnown()) {
-        return this.value();
+    if (that.isKnown()) {
+        return that.value();
     }
     return ".";
 };
@@ -233,7 +240,7 @@ function Sudoku(dimension) {
 
     this.dim = dimension;
     this.dim2 = dimension * dimension;
-    this.errorMessage = undefined;
+    this.errorMessage = [];
     this.nb_known_cells = 0;
     this.symbols = "123456789ABCDEF0".substr(0, this.dim2).split('').map(function(a) {
         return a * 1;
@@ -284,11 +291,11 @@ Sudoku.prototype.isSolved = function() {
 };
 
 Sudoku.prototype.isUnsolvable = function() {
-    return this.errorMessage;
+    return this.errorMessage.length >0;
 };
 
 Sudoku.prototype.setUnsolvable = function(message) {
-    this.errorMessage = message;
+    this.errorMessage.push(message);
 };
 
 Sudoku.prototype.initRow = function(row, str) {
@@ -503,7 +510,7 @@ function build_sudoku() {
         // find a unkown cell at random
         var unknown_cells = s.cells.filter(function(c) {
             return !c.isKnown();
-        })
+        });
         if (unknown_cells.length === 0) {
             console.log(" anormal break", s.nb_known_cells);
             break;

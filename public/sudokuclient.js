@@ -5,11 +5,10 @@ function boardCtrl($scope) {
     
    $scope.sudoku = new sudoku.Sudoku(3);
    
-/*
 $scope.sudoku.init(
    //".......27|....643.5|9....1...|..2...75.|..4.....8|6...95...|..958...2|.1.3.....|.8...6...");
    "1..8.9...|..5.1....|43...71..|517...2..|...2.5...|..6...953|..37...16|....9.5..|...4.1..7");
-*/   
+  
     $scope.getMetaRows = function () {
         
         if (this.metaRows) { return this.metaRows;}
