@@ -4,23 +4,28 @@ body {
 }
 
 a {
-  color: #00B7FF;
+  color: #B700FF;
 }
 
 .sudoCell {
-    margin:0;
-    padding:0;
-    width:45px;
-    height:45px;
+   
+    padding:0px;
     display:table-cell;
     text-align:center;
     vertical-align:middle;
-}
-
-.sudoCellKnown {
     width:45px;
-    height:45px;
-    font-size:2.5em;
+    height:45px;    
+}
+.sudoMiniCell {
+    width:0.8em;
+    height:0.8em;
+    font-size:0.8em;   
+}
+.sudoCellKnown {
+    font-size:2em;
+}
+.sudoCellUnknown {
+
 }
 .userDefined {
     color: #00B7FF;

@@ -5,18 +5,31 @@ block content
   p Welcome to #{title}
 
   div(ng-app="sudoku",ng-controller="boardCtrl")
-    button(ng-click) Go
-    table(border=1)
-      tr(ng-repeat="metarow in getMetaRows()",valign="center")
+    button(ng-click="search_and_resolve_naked_pairs()") Solve naked_pair
+    button(ng-click="iterate()") Iterate
+    table(border=1,valign="center")
+      tr(ng-repeat="metarow in getMetaRows()")
         td(ng-repeat="metacell in metarow")
           table(border=1)
-            tr(ng-repeat="row in metacell.getRows()",valign="center")
+            tr(ng-repeat="row in metacell.getRows()")
               td(ng-repeat="cell in row")
                 div.sudoCellKnown.sudoCell(ng-show="!(cell.possibleValues.length>1)",ng-class="cellColor(cell)") {{ cell.displayValue() }}
-                div.sudoCell(ng-show="(cell.possibleValues.length>1)")
+                div.sudoCellUnknown.sudoCell(ng-show="(cell.possibleValues.length>1) && false")
                     select(ng-model="cellChoice",ng-change="selectAction()")                                            
                       option(value="") --
                       option(ng-repeat="v in cell.possibleValues",value="{{v}}"){{v}}
+                div.sudoCellUnknown.sudoCell(ng-show="(cell.possibleValues.length>1)")
+                    table
+                      tr  
+                        td.sudoMiniCell(ng-repeat="v in [1,2,3]")
+                          div.sudoMiniCell(ng-show="cell.has_possible_value(v)") {{v}} 
+                      tr  
+                        td.sudoMiniCell(ng-repeat="v in [4,5,6]")
+                          div.sudoMiniCell(ng-show="cell.has_possible_value(v)") {{v}}
+                      tr  
+                        td.sudoMiniCell(ng-repeat="v in [7,8,9]")
+                          div.sudoMiniCell(ng-show="cell.has_possible_value(v)") {{v}}                          
+                    
           //end table
     //end table
     div {{sudoku.errorMessage}}
