@@ -1,24 +1,26 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
-
   div(ng-app="sudoku",ng-controller="boardCtrl")
     button(ng-click="search_and_resolve_naked_pairs()") Solve naked_pair
+    button(ng-click="search_and_resolve_canditate_lines()") search_and_resolve_canditate_lines
     button(ng-click="iterate()") Iterate
-    table(border=1,valign="center")
+    button(ng-click="reset()") reset
+    table.sudoku-main-square
       tr(ng-repeat="metarow in getMetaRows()")
-        td(ng-repeat="metacell in metarow")
-          table(border=1)
+        td.sudoku-square(ng-repeat="metacell in metarow")
+          table
             tr(ng-repeat="row in metacell.getRows()")
-              td(ng-repeat="cell in row")
-                div.sudoCellKnown.sudoCell(ng-show="!(cell.possibleValues.length>1)",ng-class="cellColor(cell)") {{ cell.displayValue() }}
-                div.sudoCellUnknown.sudoCell(ng-show="(cell.possibleValues.length>1) && false")
+              td.sudoCell(ng-repeat="cell in row",ng-dblclick="activate_cell(cell);")
+              
+                div.sudoCellKnown(ng-show="!(cell.possibleValues.length>1) && !cell.is_activated",ng-class="cellColor(cell)") {{ cell.displayValue() }}
+              
+                div.sudoCellUnknown(ng-show="cell.is_activated")
                     select(ng-model="cellChoice",ng-change="selectAction()")                                            
-                      option(value="") --
+                      option(value="RESET") --
                       option(ng-repeat="v in cell.possibleValues",value="{{v}}"){{v}}
-                div.sudoCellUnknown.sudoCell(ng-show="(cell.possibleValues.length>1)")
+                      
+                div.sudoCellUnknown(ng-show="(cell.possibleValues.length>1) && !cell.is_activated")
                     table
                       tr  
                         td.sudoMiniCell(ng-repeat="v in [1,2,3]")
@@ -32,4 +34,15 @@ block content
                     
           //end table
     //end table
+    div
+      p(ng-repeat="info in sudoku.infos")  {{info}}
+    hr
     div {{sudoku.errorMessage}}
+    
+    // pre(ng-repeat="problem in problems") {{problem.name}}
+    div problems 
+      select(ng-model="selected_problem" ng-options="problem.name for problem in problems")
+      button(ng-click="load_selected_problem()") Load
+    
+    
+    

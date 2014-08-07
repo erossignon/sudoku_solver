@@ -22,7 +22,7 @@ function MetaCell(row, col, nbR, nbC, sudoku) {
     this.col = col;
     this.nbRow = nbR;
     this.nbCol = nbC;
-    this.cells = sudoku.cells;
+    this.__cells = sudoku.cells;
     this.parent = sudoku;
 }
 
@@ -97,7 +97,7 @@ MetaCell.prototype.update = function() {
 
 MetaCell.prototype.get_cells = function() {
     
-    var i,j,c;
+    var i,j;
     var arr = [];
     for (i = 0; i < this.nbRow; i++) {
         for (j = 0; j < this.nbCol; j++) {
@@ -105,8 +105,15 @@ MetaCell.prototype.get_cells = function() {
         }
     }
     return arr;
-}
+};
 
+/**
+ * return true if arr1 and arr2 are two arrays that contains the same
+ * set of elements
+ */
+function same_array(arr1,arr2) {
+    return arr1.toString() == arr2.toString();
+}
 function partition(arr, compare_func) {
     
     var sim = [];
@@ -149,7 +156,7 @@ MetaCell.prototype.detect_naked_pairs = function() {
         
         // now try to find similar
         var r = partition(cells_with_two_unknowns,function(c) {
-            return c.possibleValues.toString() == el.possibleValues.toString();
+            return same_array(c.possibleValues,el.possibleValues);
         });
         
         var sim = r[0];
@@ -162,14 +169,118 @@ MetaCell.prototype.detect_naked_pairs = function() {
         //xx console.log(cells_with_two_unknowns);        
     }
 
-}
+};
 
+/**
+ * detect candidate Lines in a square cell.
+ *  
+ * find a value in a square cell that can only be set in a specific
+ * row or column.
+ * 
+ * i.e : find that the =4= value can only be in the second column of
+ *       the square meta cell at position (2,2)
+ * 
+ * +-----------------------------------------------------------------+
+ * | . 2 .| . 2 .|      ||      |      |      || . 2 .|      |      ||
+ * | 4 . .| 4 . .|   1  ||   9  |   5  |   7  || 4 . .|   6  |   3  ||
+ * | . 8 .| . 8 .|      ||      |      |      || . . .|      |      ||
+ * +-----------------------------------------------------------------+
+ * | . 2 .| . 2 3| . . 3||      | . 2 .|      || 1 2 .|      | 1 2 .||
+ * | 4 5 .| 4 . .| . 5 .||   8  | 4 . .|   6  || 4 . .|   7  | 4 . .||
+ * | . . .| . . .| . . .||      | . . .|      || . . 9|      | . . 9||
+ * +-----------------------------------------------------------------+
+ * |      |      |      ||      |      | . 2 .||      | . 2 .|      ||
+ * |   7  |   6  |   9  ||   1  |   3  | 4 . .||   8  |/4/. .|   5  ||
+ * |      |      |      ||      |      | . . .||      | . . .|      ||
+ * +-----------------------------------------------------------------+
+ * +-----------------------------------------------------------------+
+ * | . . .| . . .|      ||      |      |      ||      |      | . . .||
+ * | 4 . .| 4 . .|   7  ||   2  |   6  |   1  ||   3  |   5  | 4 . .||
+ * | . 8 9| . 8 .|      ||      |      |      ||      |      | . . 9||
+ * +-----------------------------------------------------------------+
+ * |      |      |      ||      |      |      ||      |      |      ||
+ * |   3  |   1  |   2  ||   4  |   9  |   5  ||   7  |   8  |   6  ||
+ * |      |      |      ||      |      |      ||      |      |      ||
+ * +-----------------------------------------------------------------+
+ * | . . .|      |      ||      |      |      || 1 2 .| 1 2 .| 1 2 .||
+ * | 4 . .|   5  |   6  ||   3  |   7  |   8  || 4 . .|/4/. .| 4 . .||
+ * | . . 9|      |      ||      |      |      || . . 9| . . 9| . . 9||
+ * +-----------------------------------------------------------------+
+ * +-----------------------------------------------------------------+
+ * |      | . 2 3|      ||      | . 2 .|      ||      | . 2 3|      ||
+ * |   1  | . . .|   8  ||   6  | 4 . .|   9  ||   5  |=4=. .|   7  ||
+ * |      | . . .|      ||      | . . .|      ||      | . . .|      ||
+ * +-----------------------------------------------------------------+
+ * | . 2 .|      | . . 3||      |      | . 2 .||      | . 2 3|      ||
+ * | . 5 .|   9  | . 5 .||   7  |   1  | 4 . .||   6  |=4=. .|   8  ||
+ * | . . .|      | . . .||      |      | . . .||      | . . .|      ||
+ * +-----------------------------------------------------------------+
+ * |      |      |      ||      |      |      || 1 2 .| 1 2 .| 1 2 .||
+ * |   6  |   7  |   4  ||   5  |   8  |   3  || . . .| . . .| . . .||
+ * |      |      |      ||      |      |      || . . 9| . . 9| . . 9||
+ * +-----------------------------------------------------------------+
+ *                                             \                     /
+ *                                              \--------  ---------/
+ *                                                       \/
+ *                                                  (meta cell 2,2)
+ */
+MetaCell.prototype.detect_candidate_lines = function() {
+   
+    assert(this.isSquare === true);
+       
+    var self = this;
+    var candidate_lines = [];
+    
+    // scan all availables symbols
+    var symbols = this.parent.symbols.slice(0); 
+    
+    symbols.forEach(function(value){
+        
+        var possible_cells = self.find_possible_cells(value);
+        
+        if (possible_cells.length > 1) {
+            // check if possible_cells share the same columns or line
+            var test_col = possible_cells[0].col;
+            var test_row = possible_cells[0].row;
+            
+            possible_cells.forEach(function(cell) {
+                if (test_col !=-1 && test_col !== cell.col) {
+                    test_col = -1; // not in a col
+                }
+                if (test_row !=-1 && test_row !== cell.row) {
+                    test_row = -1; // not in a col
+                }
+                
+            });
+            
+            if (test_col !== -1 ) {
+                // we find that 'value' should be in this column
+                candidate_lines.push({
+                    value:   value,
+                    column:  test_col
+                });
+            }
+            if (test_row !== -1 ) {
+                // we find that 'value' should be in this column
+                candidate_lines.push({
+                    value:   value,
+                    row:  test_row
+                });
+            }            
+        }
+    });
+    
+    return candidate_lines;
+};
 
 /**
  * returns the cells in this Metacell that can be set to value
  * 
  */
 MetaCell.prototype.find_possible_cells = function(value) {
+    
+    value = "" + value;
+    
     var res = [];
     var i, j;
     for (i = 0; i < this.nbRow; i++) {
@@ -197,7 +308,7 @@ MetaCell.prototype.toString = function() {
         strR += str + "|";
     }
     return strR;
-}
+};
 
 MetaCell.prototype.print = function() {
     console.log(this.toString());
@@ -218,7 +329,7 @@ MetaCell.prototype.performDeductions = function() {
         assert(res.length != 0, " cannot find candidate cells for " + value + " in meta cell" + that.row + "[" + that.nbRow + "]," + that.col + "[" + that.nbCol + "]");
         if (res.length === 1) {
             var c = res[0];
-            console.log(" Only Choice !", value, c.row, ",", c.col, c.possibleValues)
+            console.log(" Only Choice !", value, c.row, ",", c.col, c.possibleValues);
             c.setKnown(value);
         }
         return true;
@@ -229,25 +340,81 @@ function same_array(a,b) {
     assert( a instanceof Array && b instanceof Array);
     return a.toString() === b.toString();
 }
-MetaCell.prototype.apply_naked_pair = function(pair_of_values)
-{
+
+MetaCell.prototype.apply_naked_pair = function(pair_of_values) {
+    var self = this;
     assert(pair_of_values  instanceof Array);
     assert(pair_of_values.length === 2);
     assert(pair_of_values[0] < pair_of_values[1]);
-    
+    assert(typeof pair_of_values[0] === 'string');
+    assert(typeof pair_of_values[1] === 'string');    
     var cells = this.get_cells();
     
+    var total_excluded = 0 ,nb_excluded;
     cells.forEach(function(cell){
        
        if (same_array(cell.possibleValues,pair_of_values)) {
            // this is the pair
        } else {
+           
            // exclude the value of the pair in this cells
-           cell.excludeValues(pair_of_values);
+           nb_excluded = cell.excludeValues(pair_of_values);
+           assert(nb_excluded>=0);
+           total_excluded+=nb_excluded;
+           
+
        }
     });
-}
+    
+    if (total_excluded > 0) {
+       self.parent.add_info("applying  naked pair " + pair_of_values.toString() + " on " + self.name);  
+    }    
+    return total_excluded;
+};
 
+
+MetaCell.prototype.apply_candidate_line = function(candidate_line) {
+    
+    assert(this.isSquare === true);
+    
+    assert(typeof candidate_line.value === 'string');
+    assert(candidate_line.hasOwnProperty("row") || 
+    candidate_line.hasOwnProperty("column"));
+    var self = this;
+    var line;
+    if (candidate_line.hasOwnProperty("row")) {
+        line = self.parent.get_line_metacell(candidate_line.row);
+    } else {
+        line = self.parent.get_col_metacell(candidate_line.column); 
+    }
+
+
+    // find cells of lines that are not in self
+    var cells =  line.get_cells().filter(function(cell){
+        return !self.has_cell(cell);  
+    });
+    
+    var dim = self.parent.dim;
+    assert(cells.length === dim * (dim -1));
+    
+    var modified_cells = 0; 
+    cells.forEach(function(cell){
+        
+        var n1 = cell.possibleValues.length ;
+        cell.excludeValue(candidate_line.value);
+        var n2 = cell.possibleValues.length ;
+        // console.log("Modifying " ,cell.RC,cell.possibleValues, n1,n2 ,candidate_line.value);
+        modified_cells += (n1-n2);
+        //
+        if (n1-n2 > 0) {
+            self.parent.add_info(" found 'candidate line' on " + self.name + " value = " + candidate_line.value + " r=" + candidate_line.row + " c=" + candidate_line.column  ); 
+        }
+       
+    });
+    
+    return modified_cells;
+    
+};
 
 MetaCell.prototype.getRows = function() {
     if (this.rows) {
@@ -271,6 +438,24 @@ MetaCell.prototype.getRows = function() {
     return rows;
 };
 
+MetaCell.prototype.__defineGetter__("isSquare",function(){
+    return this.nbRow === this.nbCol;
+})
+/**
+ * @method has_cell
+ * @return true if the provided cell belong to this metacell.
+ */
+MetaCell.prototype.has_cell = function(cell) {
+    
+    var cells = this.get_cells();
+    
+    
+    var found = cells.filter(function(c) {
+        return c.row == cell.row && c.col == cell.col;
+    });
+    return found.length === 1;
+}
+
 
 function Cell(row, col, sudoku) {
     this.row = row;
@@ -283,8 +468,10 @@ function Cell(row, col, sudoku) {
  * @return true if value is known as a possible candidate for the cell.
  */
 Cell.prototype.has_possible_value = function(val) {
-  return  this.possibleValues.lastIndexOf(val * 1) >=0; 
-}
+    val = ""+val;
+  assert( typeof val === 'string'," must be a symbol");
+  return  this.possibleValues.lastIndexOf(val) >=0; 
+};
 /**
  * @method isKnown
  * @return true if the value of the cell is known
@@ -320,11 +507,11 @@ Cell.prototype.__defineGetter__("RC",function() {
 
 Cell.prototype.setKnown = function(value) {
 
-    value = value * 1.0;
+    value = "" + value ;
     if (this.possibleValues.length !== 1) {
         assert(this.possibleValues.lastIndexOf(value) != -1, " cell cannot have value of " + value + " " + this.possibleValues);
         this.parent.nb_known_cells++;
-        this.possibleValues = [value];
+        this.possibleValues = ["" +value];
     }
     else {
         assert(this.value() == value, " trying to force a different value old value=" + this.value() + " " + value);
@@ -338,7 +525,7 @@ Cell.prototype.excludeValue = function(value) {
     });
     if (this.possibleValues.length === 0) {
         this.parent.setUnsolvable(" removing too many values " + value + " at cell " + this.row + "," + this.col);
-        return;
+        return 0;
     }
     if (this.possibleValues.length === 1 && lbefore == 2) {
         this.parent.nb_known_cells++;
@@ -347,17 +534,32 @@ Cell.prototype.excludeValue = function(value) {
     if (this.possibleValues.length === 0) {
         console.log(" EXCESSIVE EXCLUDED ", lbefore, value);
     }
+    
+    return lbefore - this.possibleValues.length;
 };
 
 Cell.prototype.excludeValues = function(values) {
     assert( values instanceof Array);
     var that = this;
-    if (this.parent.isUnsolvable()) return;
+    var total_excluded = 0;
+    if (this.parent.isUnsolvable()) return 0;
     values.forEach(function(v) {
-        that.excludeValue(v);
+        var n = that.excludeValue(v);
+        total_excluded += n;
     });
+    return total_excluded;
 };
 
+Cell.prototype._reset = function() {
+    this.possibleValues = this.parent.symbols.slice(0);
+    this.status = "";
+};
+
+Cell.prototype.reset = function() {
+   this._reset(); 
+   this.parent.reset_all_calculated_cells();
+    
+};
 
 
 function Sudoku(dimension) {
@@ -365,9 +567,11 @@ function Sudoku(dimension) {
     this.dim = dimension;
     this.dim2 = dimension * dimension;
     this.errorMessage = [];
+    this.infos = [];
+    
     this.nb_known_cells = 0;
     this.symbols = "123456789ABCDEF0".substr(0, this.dim2).split('').map(function(a) {
-        return a * 1;
+        return a;
     });
     //xx console.warn(this.symbols);
     this.cells = [];
@@ -385,22 +589,37 @@ function Sudoku(dimension) {
     for (i = 0; i < this.dim; i++) {
         for (j = 0; j < this.dim; j++) {
             cc = new MetaCell(i * this.dim, j * this.dim, this.dim, this.dim, this);
+            cc.name = "B" + (i*3+j+1);
             this.metaCells.push(cc);
         }
     }
     // lines meta cells
     for (i = 0; i < this.dim2; i++) {
         cc = new MetaCell(i, 0, 1, this.dim2, this);
+        cc.name = "L" + (i+1);
         this.metaCells.push(cc);
     }
     // col meta cells    
     for (i = 0; i < this.dim2; i++) {
         cc = new MetaCell(0, i, this.dim2, 1, this);
+        cc.name = "C" + (i+1);
         this.metaCells.push(cc);
     }
 
 }
 
+
+Sudoku.prototype.add_info = function(str) {
+    this.infos.push(str);
+};
+
+Sudoku.prototype.reset_all_calculated_cells = function() {
+    this.cells.forEach(function(cell){
+        if (!cell.isKnown()) {
+            cell._reset();
+        }
+    })
+}
 /**
  * @method get_square_metacell
  * @return {MetaCell}
@@ -591,14 +810,26 @@ function print_2(sudoku) {
     console.warn("messages = ",sudoku.errorMessage);
 }
 
-Sudoku.prototype.asString = function() {
+
+Sudoku.prototype.toString = function(options) {
     var str = "";
     var i, j;
     for (i = 0; i < this.dim2; i++) {
         for (j = 0; j < this.dim2; j++) {
             var c = this.cell(i, j);
             if (c.isKnown()) {
-                str += c.value();
+                
+                if (options === "0") {
+                    if (c.status==="0") {
+                      str += c.value();   
+                    } else {
+                       str += "."; 
+                    }
+                    
+                } else {
+                     str += c.value();
+                }
+               
             }
             else {
                 str += ".";
@@ -609,6 +840,7 @@ Sudoku.prototype.asString = function() {
     return str;
 
 };
+Sudoku.prototype.asString = Sudoku.prototype.toString ;
 
 Sudoku.prototype.getDeepCopy = function() {
     var newS = new Sudoku(this.dim);
@@ -621,6 +853,9 @@ Sudoku.prototype.search_and_resolve_naked_pairs = function() {
    var that = this;
    
    var nb_naked_pair_found = 0;
+
+   var nb_modified_cells = 0;
+     
    that.metaCells.forEach(function(metacell){
       
      var naked_pairs = metacell.detect_naked_pairs(); 
@@ -628,11 +863,32 @@ Sudoku.prototype.search_and_resolve_naked_pairs = function() {
      naked_pairs.forEach(function(naked_pair) {
         nb_naked_pair_found ++;
         //xx console.log(" Found naked pair ",naked_pair.values);
-        metacell.apply_naked_pair(naked_pair.values);
+        nb_modified_cells += metacell.apply_naked_pair(naked_pair.values);
      });
      
    });
-   return nb_naked_pair_found;
+   console.log("nb_naked_pair_found ",nb_naked_pair_found , " nb_modified_cells =",nb_modified_cells);
+   return nb_modified_cells;
+};
+
+Sudoku.prototype.search_and_resolve_canditate_lines = function() {
+   var that = this;   
+   // apply on square metacells only
+   
+   var nb_modified_cells = 0;
+   
+   that.metaCells.forEach(function(metacell){
+       
+       if (metacell.isSquare) {
+            var candidate_lines = metacell.detect_candidate_lines();
+            
+            candidate_lines.forEach(function(candidate_line){
+                nb_modified_cells += metacell.apply_candidate_line(candidate_line);
+            });
+       } 
+    });
+    
+    return nb_modified_cells;
 };
 
 
@@ -646,6 +902,11 @@ function solve_Sudoku(str) {
     while (stack.length) {
         s = stack.pop();
         while (s.update()) {
+            
+            s.search_and_resolve_canditate_lines();
+            
+            s.search_and_resolve_naked_pairs();
+            
             counter++; /*print_sudoku(s); */
         }
 

@@ -1,3 +1,4 @@
+/* global: it, describe, before, after, xit */
 var Sudoku = require("../public/sudoku");
 var should = require("should");
 
@@ -30,7 +31,7 @@ describe("sudoku basics",function() {
         
         //console.log(board.get_square_metacell(0,0).find_possible_cells(1));
         
-        board.get_square_metacell(0,0).find_possible_cells(1).should.have.lengthOf(9);
+        board.get_square_metacell(0,0).find_possible_cells("1").should.have.lengthOf(9);
         
     });
     
@@ -64,14 +65,26 @@ describe("sudoku basics",function() {
     it("should raise an exception when a invalid col metacells is accessed" ,function(){
         (function(){sudoku.get_col_metacell(-1);}).should.throwError();
         (function(){sudoku.get_col_metacell(10);}).should.throwError();
-    });        
+    });  
+    
+    it("should have cell(0,0) belonging to first columns metacell",function(){
+    
+        var metacell = sudoku.get_col_metacell(0);
+        metacell.has_cell(sudoku.cell(0,0)).should.equal(true);
+        metacell.has_cell(sudoku.cell(1,0)).should.equal(true);
+        metacell.has_cell(sudoku.cell(0,1)).should.equal(false);        
+    });
+    
+});
+
+describe("sudoku metacells has cell",function() {
+
+    
 });
 
 describe("sudoku",function() {
     
     
-
-
     it("should propagate possible values when a cell is set",function(){
         var board = new Sudoku.Sudoku(2);
         board.nb_known_cells.should.equal(0);
@@ -103,10 +116,10 @@ describe("sudoku",function() {
         s.init(str);  
         s.update();
 
-        s.get_square_metacell(0,0).get_known_values().should.eql([4,7,9,8,2]);
+        s.get_square_metacell(0,0).get_known_values().should.eql(["4","7","9","8","2"]);
       
         s.get_square_metacell(0,0).updateUnknownCells().should.eql(true);  
-        s.cell(0,1).possibleValues.should.eql([1,5]);
+        s.cell(0,1).possibleValues.should.eql(["1","5"]);
         
         Sudoku.print_2(s);
         
@@ -116,29 +129,29 @@ describe("sudoku",function() {
         // | . . 6| . 5 .|   4  || . . 6|   8  |   7  || . 5 .| . . 6|   2  ||
         // | . . 9| . . .|      || . . 9|      |      || . . .| . . .|      ||
         // +-----------------------------------------------------------------+
-        s.cell(8,0).possibleValues.should.eql([1,3,6,9]);
-        s.cell(8,1).possibleValues.should.eql([1,5]);
-        s.cell(8,2).possibleValues.should.eql([4]);
-        s.cell(8,3).possibleValues.should.eql([3,6,9]);
-        s.cell(8,4).possibleValues.should.eql([8]);
-        s.cell(8,5).possibleValues.should.eql([7]);
-        s.cell(8,6).possibleValues.should.eql([1,5]);
-        s.cell(8,7).possibleValues.should.eql([1,6]);
-        s.cell(8,8).possibleValues.should.eql([2]);
+        s.cell(8,0).possibleValues.should.eql(["1","3","6","9"]);
+        s.cell(8,1).possibleValues.should.eql(["1","5"]);
+        s.cell(8,2).possibleValues.should.eql(["4"]);
+        s.cell(8,3).possibleValues.should.eql(["3","6","9"]);
+        s.cell(8,4).possibleValues.should.eql(["8"]);
+        s.cell(8,5).possibleValues.should.eql(["7"]);
+        s.cell(8,6).possibleValues.should.eql(["1","5"]);
+        s.cell(8,7).possibleValues.should.eql(["1","6"]);
+        s.cell(8,8).possibleValues.should.eql(["2"]);
         
         
         var last_line = s.get_line_metacell(8);
         var naked_pairs = last_line.detect_naked_pairs();
         
         naked_pairs.length.should.eql(1);
-        naked_pairs[0].values.should.eql([1,5]);
-        naked_pairs[0].cells[0].possibleValues.should.eql([1,5]);
-        naked_pairs[0].cells[1].possibleValues.should.eql([1,5]);
+        naked_pairs[0].values.should.eql(["1","5"]);
+        naked_pairs[0].cells[0].possibleValues.should.eql(["1","5"]);
+        naked_pairs[0].cells[1].possibleValues.should.eql(["1","5"]);
         
         naked_pairs[0].cells[0].RC.should.eql("I2");
         naked_pairs[0].cells[1].RC.should.eql("I7");
         
-        last_line.apply_naked_pair([1,5]);
+        last_line.apply_naked_pair(["1","5"]);
         
         // now line 9 shall be :
         Sudoku.print_2(s);
@@ -147,17 +160,30 @@ describe("sudoku",function() {
         // | . . 6| . 5 .|   4  || . . 6|   8  |   7  || . 5 .| . . 6|   2  ||
         // | . . 9| . . .|      || . . 9|      |      || . . .| . . .|      ||
         // +-----------------------------------------------------------------+
-        s.cell(8,0).possibleValues.should.eql([3,6,9]);
-        s.cell(8,1).possibleValues.should.eql([1,5]);
-        s.cell(8,2).possibleValues.should.eql([4]);
-        s.cell(8,3).possibleValues.should.eql([3,6,9]);
-        s.cell(8,4).possibleValues.should.eql([8]);
-        s.cell(8,5).possibleValues.should.eql([7]);
-        s.cell(8,6).possibleValues.should.eql([1,5]);
-        s.cell(8,7).possibleValues.should.eql([6]);
-        s.cell(8,8).possibleValues.should.eql([2]);    
+        s.cell(8,0).possibleValues.should.eql(["3","6","9"]);
+        s.cell(8,1).possibleValues.should.eql(["1","5"]);
+        s.cell(8,2).possibleValues.should.eql(["4"]);
+        s.cell(8,3).possibleValues.should.eql(["3","6","9"]);
+        s.cell(8,4).possibleValues.should.eql(["8"]);
+        s.cell(8,5).possibleValues.should.eql(["7"]);
+        s.cell(8,6).possibleValues.should.eql(["1","5"]);
+        s.cell(8,7).possibleValues.should.eql(["6"]);
+        s.cell(8,8).possibleValues.should.eql(["2"]);    
         
-        s.search_and_resolve_naked_pairs().should.eql(7);
+        s.search_and_resolve_naked_pairs().should.eql(0); // laredy fixed
+    });
+    
+    it("should search_and_resolve_naked_pairs ",function() {
+        // https://www.sudokuoftheday.com/techniques/naked-pairs-triples/
+        
+        var str = "4..27.6..|798156234|.2.84...7|" + 
+                  "237468951|849531726|561792843|" + 
+                  ".82.15479|.7..243..|..4.87..2"
+        var s = new Sudoku.Sudoku(3);
+        s.init(str);  
+        s.update();  
+        
+         s.search_and_resolve_naked_pairs().should.eql(2);
     });
     
     xit("should detect naked triples ",function() {
@@ -181,5 +207,50 @@ describe("sudoku",function() {
         var naked_triples = column1.detect_naked_triples();
         
     });
+    
+    it("should solve Candidate Lines", function() {
+      
+      var str = "..1957.63|...8.6.7.|76913.8.5|..726135.|312495786|.56378...|1.86.95.7|.9.71.6.8|674583...|";
+      var s = new Sudoku.Sudoku(3);
+      s.init(str);  
+      s.update();        
+      Sudoku.print_2(s);       
+      
+      var metacell = s.get_square_metacell(2,2);
+      metacell.cell(0,0).possibleValues.should.eql(["5"]);
+      metacell.cell(0,1).possibleValues.should.eql(["2","3","4"]);
+      metacell.cell(0,2).possibleValues.should.eql(["7"]);
+      metacell.cell(1,0).possibleValues.should.eql(["6"]);
+      metacell.cell(1,1).possibleValues.should.eql(["2","3","4"]);
+      metacell.cell(1,2).possibleValues.should.eql(["8"]);
+      metacell.cell(2,0).possibleValues.should.eql(["1","2","9"]);
+      metacell.cell(2,1).possibleValues.should.eql(["1","2","9"]);
+      metacell.cell(2,2).possibleValues.should.eql(["1","2","9"]); 
+      
+      var candidate_lines = metacell.detect_candidate_lines();
+      
+      console.log( "candidate_lines =",candidate_lines);
+      candidate_lines.length.should.equal(4);
+      
+      candidate_lines[0].should.eql({ value: '1' , row: 8 });
+      candidate_lines[1].should.eql({ value: '3' , column: 7 });      
+      candidate_lines[2].should.eql({ value: '4' , column: 7 });      
+      candidate_lines[3].should.eql({ value: '9' , row: 8 });  
+      
+      
+      var col7 = s.get_col_metacell(7);
+      col7.cell(2,0).possibleValues.should.eql(["2","4"]);
+      col7.cell(5,0).possibleValues.should.eql(["1","2","4","9"]);
+      
+      var nb_modified_cells = metacell.apply_candidate_line(candidate_lines[2]);
+      
+      col7.cell(2,0).possibleValues.should.eql(["2"]);
+      col7.cell(5,0).possibleValues.should.eql(["1","2","9"]);      
+      
+      nb_modified_cells.should.equal(2);
+      
+    });
+    
+    
     
 });

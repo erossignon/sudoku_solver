@@ -6,15 +6,30 @@ body {
 a {
   color: #B700FF;
 }
-
-.sudoCell {
-   
+table {
+     border-collapse: collapse;
+         margin: 0px;
     padding:0px;
-    display:table-cell;
+}
+.sudoku-square {
+    border: solid 2px black;
+}
+.sudoku-main-square {
+    border: 1px;
+    border-color: red;
+    border-style: solid;
+    margin: 0px;
+    padding:0px;
+}
+.sudoCell {
+    border: solid 1px black;
+    margin: 0px;
+    padding:0px;
+    /* display:table-cell; */
     text-align:center;
     vertical-align:middle;
-    width:45px;
-    height:45px;    
+    width:40px;
+    height:40px;    
 }
 .sudoMiniCell {
     width:0.8em;
