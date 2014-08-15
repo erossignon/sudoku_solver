@@ -97,8 +97,13 @@ app.directive("sudokuCell", function () {
                   return false; // ??   $event.stopPropagation();
              };
             $scope.cellColor = function(c) {
-                if (c.status == "0") { return "userDefined";}
-                return "";
+                
+                return {
+                    userDefined: (c.status == "0"),
+                    conflicting: (c.has_contradiction())
+                };
+                // if (c.status == "0") { return "userDefined";}
+                // return "";
             };
             $scope.activate_cell = function(cell) {
                   if ( sudoku_extra.selector_visible) {
@@ -157,8 +162,10 @@ function initialize_localstorage() {
                         "..1957.63|...8.6.7.|769.3.8.5|..726.35.|31.49....|.56.7....|1.8..95.7|.9....6.8|6.45.3...",
                         
             "naked pairs":
-                        "4..27.6..|798156234|.2.84...7|237468951|849531726|561792843|.82.15479|.7..243..|..4.87..2"
+                        "4..27.6..|798156234|.2.84...7|237468951|849531726|561792843|.82.15479|.7..243..|..4.87..2",
             
+            "123":
+                "123456789|456789123|789123456|.........|.........|.........|.........|.........|........."
         };        
     }
 

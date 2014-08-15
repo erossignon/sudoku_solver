@@ -487,6 +487,53 @@ Cell.prototype.isKnown = function() {
 };
 
 /**
+ * returns a array of meta cell that contains this cell
+ */
+Cell.prototype.get_metacells = function() {
+   var m = [];
+   
+   var dim = this.parent.dim;
+   
+   var r = Math.floor(this.row / dim);
+   var c = Math.floor(this.col / dim);
+   m.push( this.parent.get_square_metacell(r,c));
+   m.push( this.parent.get_line_metacell(this.row));
+   m.push( this.parent.get_col_metacell(this.col));
+   return m;
+};
+
+Cell.prototype.conflicting_cells = function() {
+  var meta_cells = this.get_metacells();
+  if (this.possibleValues.length > 1) {
+      return [];
+  }
+  
+  var value = this.possibleValues[0];
+  
+  var self = this;
+  function find_other_cells_in_zone(zone) {
+      var arr = zone.get_cells().filter(function(cell){
+         return cell.isKnown() && cell!=self && cell.has_possible_value(value);
+      });
+      return arr;
+  }
+  var a1 = find_other_cells_in_zone(meta_cells[0]);
+  var a2 = find_other_cells_in_zone(meta_cells[1]);
+  var a3 = find_other_cells_in_zone(meta_cells[2]);
+  
+  var conflicting_cells = a1.concat(a2,a3);
+  
+  var unique = conflicting_cells.filter(function(item, i, ar){ return ar.indexOf(item) === i; });
+  
+  return unique;
+};
+/*
+ * returns true if the cell contains a value that create a contradiction
+ */
+Cell.prototype.has_contradiction = function() {
+    return this.conflicting_cells().length > 0;
+};
+/**
  * @method value
  * @return the value of the cell ( the cell must be known)
  */
@@ -506,6 +553,7 @@ Cell.prototype.displayValue = function() {
     }
     return ".";
 };
+
 
 Cell.prototype.__defineGetter__("RC",function() {
     return String.fromCharCode(65+this.row) + "" + (this.col +1);
@@ -621,11 +669,15 @@ Sudoku.prototype.add_info = function(str) {
 
 Sudoku.prototype.reset_all_calculated_cells = function() {
     this.cells.forEach(function(cell){
-        if (!cell.isKnown()) {
+        if (cell.status !== "0") {
             cell._reset();
         }
-    })
-}
+    });
+    this.errorMessage = [];
+    this.infos = [];
+    this.update();
+};
+
 /**
  * @method get_square_metacell
  * @return {MetaCell}
@@ -635,7 +687,7 @@ Sudoku.prototype.get_square_metacell = function(row, col) {
     assert( col >=0 && col < this.dim);
     var offset = 0;
     return this.metaCells[offset + row * this.dim + col];
-}
+};
 /**
  * @method get_line_metacell
  * @return {MetaCell}
@@ -656,7 +708,7 @@ Sudoku.prototype.get_col_metacell = function(col) {
     var offset = this.dim2 +  this.dim * this.dim;
     return this.metaCells[offset + col];
     
-}
+};
 Sudoku.prototype.cell = function(i, j) {
     assert(i >= 0 && i < this.dim2);
     assert(j >= 0 && j < this.dim2);

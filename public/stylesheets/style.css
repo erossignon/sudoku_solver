@@ -46,6 +46,9 @@ table {
 .userDefined {
     color: #00B7FF;
 }
+.conflicting {
+     background-color: red;   
+}
 .selected_num {
     background-color: #EEEEFF;
 }

@@ -62,6 +62,7 @@ describe("sudoku basics",function() {
         sudoku.get_col_metacell(0).toString().should.eql("1|2|3|9|8|7|6|5|4|");
         sudoku.get_col_metacell(5).toString().should.eql("6|7|8|4|3|2|1|9|8|");
     });    
+    
     it("should raise an exception when a invalid col metacells is accessed" ,function(){
         (function(){sudoku.get_col_metacell(-1);}).should.throwError();
         (function(){sudoku.get_col_metacell(10);}).should.throwError();
@@ -75,7 +76,23 @@ describe("sudoku basics",function() {
         metacell.has_cell(sudoku.cell(0,1)).should.equal(false);        
     });
     
+    it("should offer a way to access the meta cells of a given cell",function(){
+        
+        var metacells = sudoku.cell(0,0).get_metacells();
+        var metacellsNames = metacells.map(function(c) { return c.name; });
+        metacellsNames.should.eql(["B1","L1","C1"]);
+        
+        metacells = sudoku.cell(4,5).get_metacells();
+        metacellsNames = metacells.map(function(c) { return c.name; });
+        metacellsNames.should.eql(["B5","L5","C6"]);
+
+        metacells = sudoku.cell(0,5).get_metacells();
+        metacellsNames = metacells.map(function(c) { return c.name; });
+        metacellsNames.should.eql(["B2","L1","C6"]);
+        
+    });
 });
+
 
 describe("sudoku metacells has cell",function() {
 
@@ -251,8 +268,78 @@ describe("sudoku",function() {
       
     });
     
+    function make_sudoku(str) {
+          var s = new Sudoku.Sudoku(3);
+          s.init(str);  
+          s.update();        
+          Sudoku.print_2(s);    
+          return s;
+    }
     
+    it("should throw error when trying to set a invalid  value as knwon",function() {
+        
+          var s = make_sudoku("..1957.63|...8.6.7.|76913.8.5|..726135.|312495786|.56378...|1.86.95.7|.9.71.6.8|674583...|");
+          (function(){ s.cell(0,0).setKnown(7); // conflicting !!!
+          }).should.throwError();
+          
+    });
     
+    it("should not have a contraction 1/2",function() {
+        
+          var s = make_sudoku("1........|.........|.........|.........|.........|.........|.........|.........|.........");
+
+          s.cell(0,6).has_contradiction().should.eql(false);
+          
+          s.cell(0,0).has_contradiction().should.eql(false);
+          
+          var c = s.cell(0,0).conflicting_cells().map(function(c) { return c.RC; });
+          
+          c.should.eql([]);
+    });  
+    
+
+    it("should not have a contradiction 2/3",function() {
+        
+          var s = make_sudoku("1........|2........|.........|.........|.........|.........|.........|.........|.........");
+          
+          s.cell(0,6).has_contradiction().should.eql(false);
+          
+          s.cell(0,0).has_contradiction().should.eql(false);
+          s.cell(1,0).has_contradiction().should.eql(false);
+          
+          s.cell(0,0).conflicting_cells().should.eql([]);
+          s.cell(1,0).conflicting_cells().should.eql([]);
+    });        
+    function get_name(cell) {
+        return cell.RC;
+    }
+    it("should not have a contradiction 3/3",function() {
+        
+          var s = make_sudoku(".....5...|.........|.5.......|.........|.........|.........|.........|.........|.........");
+        
+          s.cells.forEach(function(c){ 
+              console.log(" -------> ", c.RC, c.conflicting_cells().map(get_name));
+              c.has_contradiction().should.eql(false); 
+              
+          });
+          
+    });    
+    it("should xxx",function() {
+        
+          var str = "11.......|1........|.........|.........|.........|.........|.........|.........|.........";
+          var s = new Sudoku.Sudoku(3);
+          s.init(str);  
+          s.update();        
+          Sudoku.print_2(s);    
+
+          s.cell(0,6).has_contradiction().should.eql(false);
+          
+          s.cell(0,0).has_contradiction().should.eql(true);
+          
+          var c = s.cell(0,0).conflicting_cells().map(function(c) { return c.RC; });
+          
+          c.should.eql(["A2","B1"]);
+    });    
 });
 
 // references:
