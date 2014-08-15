@@ -2,9 +2,13 @@ doctype html
 html
   head
     title= "Sudoku Toolbox"
-    script(src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.21/angular.js")
+    script(src="/angular/angular.js")
+    script(src="/angular-touch/angular-touch.js")
+    script(src="/angular-gestures/gestures.js")
+    //script(src="http://192.168.1.29:8080/target/target-script-min.js")
     script(src="sudoku.js")
     script(src="sudokuclient.js")
     link(rel='stylesheet', href='/stylesheets/style.css')
+    meta(name="viewport",content="width=320")
   body
     block content

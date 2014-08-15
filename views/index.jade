@@ -1,39 +1,60 @@
 extends layout
 
 block content
-  div(ng-app="sudoku",ng-controller="boardCtrl")
+
+  div(ng-app="sudoku",ng-controller="boardCtrl",style="position:relative;",hm-tapxxx="touch_activate_cell(null)")
+    script(type="text/ng-template", id = "/sudoku-box.html") 
+           // $scope.metaCell
+           div(style="position:relative;")
+            sudoku-selector(ng-show="is_selector_shown()")
+            table
+              tr(ng-repeat="row in metacell.getRows()")
+                td.sudoCell(ng-repeat="cell in row",ng-dblclick="activate_cell(cell);",hm-tap="touch_activate_cell(cell)")
+                  sudoku-cell 
+      
+    script(type="text/ng-template", id = "/sudoku-selector.html")
+            div(style="position:absolute;top:0px;left:0px;background-color:#F5EFFB;")
+                table.sudoSelectNumber(style="width:100%;height:100%;font-size:2.7em;")
+                  tr(ng-repeat="line in [0,1,2]")
+                    td.sudoCell(ng-repeat="col in [0,1,2]",ng-class='{ selected_num: hover}', ng-mouseenter="hover = true",ng-mouseleave="hover = false")
+                      div(hm-tap="selectNumber(line*3 + col +  1)",ng-show="is_num_selector_visible(line*3 + col +  1)") {{ line*3 + col +  1}}
+            // end cell selector
+
+    script(type="text/ng-template", id = "/sudoku-cell.html")
+     
+      div.sudoCellKnown(ng-show="!(cell.possibleValues.length>1) && !cell.is_activated",ng-class="cellColor(cell)",hm-swipe="handleSwipe($event)",hm-drag="handleSwipe($event)") {{ cell.displayValue() }}
+    
+      div.sudoCellUnknown(ng-show="cell.is_activated")
+          select(ng-model="cellChoice",ng-change="selectAction()")                                            
+            option(value="RESET") --
+            option(ng-repeat="v in cell.possibleValues",value="{{v}}") {{v}}
+            
+      div.sudoCellUnknown(ng-show="(cell.possibleValues.length>1) && !cell.is_activated")
+          table
+            tr  
+              td.sudoMiniCell(ng-repeat="v in [1,2,3]")
+                div.sudoMiniCell(ng-show="cell.has_possible_value(v)") {{v}} 
+            tr  
+              td.sudoMiniCell(ng-repeat="v in [4,5,6]")
+                div.sudoMiniCell(ng-show="cell.has_possible_value(v)") {{v}}
+            tr  
+              td.sudoMiniCell(ng-repeat="v in [7,8,9]")
+                div.sudoMiniCell(ng-show="cell.has_possible_value(v)") {{v}}
+          //end table
+      // end div
+            
     button(ng-click="search_and_resolve_naked_pairs()") Solve naked_pair
     button(ng-click="search_and_resolve_canditate_lines()") search_and_resolve_canditate_lines
     button(ng-click="iterate()") Iterate
     button(ng-click="reset()") reset
+    div {{ sudoku.extra.cell_touched ? sudoku.extra.cell_touched.RC : "?" }}
+    // the sudoku table
     table.sudoku-main-square
       tr(ng-repeat="metarow in getMetaRows()")
         td.sudoku-square(ng-repeat="metacell in metarow")
-          table
-            tr(ng-repeat="row in metacell.getRows()")
-              td.sudoCell(ng-repeat="cell in row",ng-dblclick="activate_cell(cell);")
-              
-                div.sudoCellKnown(ng-show="!(cell.possibleValues.length>1) && !cell.is_activated",ng-class="cellColor(cell)") {{ cell.displayValue() }}
-              
-                div.sudoCellUnknown(ng-show="cell.is_activated")
-                    select(ng-model="cellChoice",ng-change="selectAction()")                                            
-                      option(value="RESET") --
-                      option(ng-repeat="v in cell.possibleValues",value="{{v}}"){{v}}
-                      
-                div.sudoCellUnknown(ng-show="(cell.possibleValues.length>1) && !cell.is_activated")
-                    table
-                      tr  
-                        td.sudoMiniCell(ng-repeat="v in [1,2,3]")
-                          div.sudoMiniCell(ng-show="cell.has_possible_value(v)") {{v}} 
-                      tr  
-                        td.sudoMiniCell(ng-repeat="v in [4,5,6]")
-                          div.sudoMiniCell(ng-show="cell.has_possible_value(v)") {{v}}
-                      tr  
-                        td.sudoMiniCell(ng-repeat="v in [7,8,9]")
-                          div.sudoMiniCell(ng-show="cell.has_possible_value(v)") {{v}}                          
-                    
-          //end table
+          sudoku-box
     //end table
+    
     div
       p(ng-repeat="info in sudoku.infos")  {{info}}
     hr
@@ -43,6 +64,6 @@ block content
     div problems 
       select(ng-model="selected_problem" ng-options="problem.name for problem in problems")
       button(ng-click="load_selected_problem()") Load
-    
+  // end controller div  
     
     

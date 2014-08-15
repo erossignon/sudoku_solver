@@ -188,7 +188,7 @@ describe("sudoku",function() {
     
     xit("should detect naked triples ",function() {
     
-        // https://www.sudokuoftheday.com/techniques/naked-pairs-triples/
+
         
         var str = "6..8.2735|7.235694.|3..4.7.62|" + 
                   "1..975.24|2..183.79|.79624..3|" + 
@@ -254,3 +254,12 @@ describe("sudoku",function() {
     
     
 });
+
+// references:
+// https://www.sudokuoftheday.com/techniques/naked-pairs-triples/
+// http://www.paulspages.co.uk/sudokuxp/howtosolve/
+// http://www.geometer.org/mathcircles/sudoku.pdf
+// http://www.thonky.com/sudoku/simple-coloring/  +++
+// http://www.sudokuwiki.org/sudoku.htm
+// http://www.sudokuwiki.org/Intersection_Removal
+// http://www.sudokuwiki.org/Alternating_Inference_Chains

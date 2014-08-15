@@ -67,7 +67,7 @@ MetaCell.prototype.updateUnknownCells = function() {
 
     var i, j;
 
-    // collect value that are sets
+    // collectvalues that are already known in this zone
     var known_values = this.get_known_values();
 
     // console.log(" known values " ,a );
@@ -76,9 +76,11 @@ MetaCell.prototype.updateUnknownCells = function() {
             var c = this.cell(i, j);
             if (!c.isKnown()) {
                 c.excludeValues(known_values);
-                if (c.possibleValues.length === 0) {
-                    return false; // cannot solve
-                }
+                // if (c.possibleValues.length === 0) {
+                //     // there is a contradiction here
+                //     assert( false, " should not get there !!!");
+                //     return false; // cannot solve
+                // }
                 assert(c.possibleValues.length > 0, " We have excluded the only possible value", c);
             }
         }
@@ -316,17 +318,18 @@ MetaCell.prototype.print = function() {
 
 
 MetaCell.prototype.performDeductions = function() {
-
-    var that = this;
-    var b = this.get_unknown_values();
+    // hidden single technique
+    // 
+    var zone = this;
+    var b = zone.get_unknown_values();
 
     b.every(function(value) {
-        var res = that.find_possible_cells(value);
+        var res = zone.find_possible_cells(value);
         if (res.length === 0 ) {
-            that.parent.setUnsolvable(" cannot find candidate cells for " + value + " in meta cell" + that.row + "[" + that.nbRow + "]," + that.col + "[" + that.nbCol + "]");
+            zone.parent.setUnsolvable(" cannot find candidate cells for " + value + " in meta cell" + zone.row + "[" + zone.nbRow + "]," + zone.col + "[" + zone.nbCol + "]");
             return false; // cannot solve - dead end
         }
-        assert(res.length != 0, " cannot find candidate cells for " + value + " in meta cell" + that.row + "[" + that.nbRow + "]," + that.col + "[" + that.nbCol + "]");
+        assert(res.length != 0, " cannot find candidate cells for " + value + " in meta cell" + zone.row + "[" + zone.nbRow + "]," + zone.col + "[" + zone.nbCol + "]");
         if (res.length === 1) {
             var c = res[0];
             console.log(" Only Choice !", value, c.row, ",", c.col, c.possibleValues);
@@ -438,6 +441,9 @@ MetaCell.prototype.getRows = function() {
     return rows;
 };
 
+/**
+ *  @property isSquare : true if metacell is a box 
+ */
 MetaCell.prototype.__defineGetter__("isSquare",function(){
     return this.nbRow === this.nbCol;
 })
